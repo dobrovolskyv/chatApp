@@ -49,7 +49,7 @@ export default function RootLayoutNav() {
                 <Stack.Screen
                     name="(chat)/[chatid]"
                     options={{
-                        headerTitle: 'test',
+                        headerTitle: '',
                     }}
                 />
             </Stack>
