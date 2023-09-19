@@ -1,5 +1,5 @@
-import { Text, View, StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform, TextInput, TouchableOpacity, ListRenderItem, FlatList } from 'react-native'
-import React, { Component, useEffect, useState } from 'react'
+import { Text, View, StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform, TextInput, TouchableOpacity, ListRenderItem, FlatList, Keyboard } from 'react-native'
+import React, { Component, useEffect, useRef, useState } from 'react'
 import { useLocalSearchParams, useNavigation } from 'expo-router'
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useConvex, useMutation, useQuery } from 'convex/react';
@@ -16,6 +16,7 @@ const Page = () => {
     const [newMessage, setNewMessage] = useState('');
     const addMessage = useMutation(api.messages.sendMessage);
     const messages = useQuery(api.messages.get, { chitId: chatid as Id<'groups'> }) || [];
+    const listRef= useRef<FlatList>(null)
 
     useEffect(() => {
         const loadGroup = async () => {
@@ -34,7 +35,14 @@ const Page = () => {
         loadUser();
     }, [])
 
+    useEffect(()=>{
+        setTimeout(()=>{
+            listRef.current?.scrollToEnd({animated: true})
+        }, 300)
+    },[messages])
+
     const handleSendMessage = () => {
+        Keyboard.dismiss();
         addMessage({
             group_id: chatid as Id<'groups'>,
             content: newMessage,
@@ -47,8 +55,11 @@ const Page = () => {
         const isUserMessage = item.user === user;
 
         return (
-            <View>
-                <Text>{item.content}</Text>
+            <View style={[styles.messageContainer, isUserMessage ? styles.userMessageContainer : styles.otherMessageContainer]}>
+                {item.content !== '' && <Text style={[styles.messageText, isUserMessage ? styles.userMessageText : null]}>{item.content}</Text>}
+                <Text style={styles.timestamp }>
+                   {new Date(item._creationTime).toLocaleTimeString()} - {item.user}
+                </Text>
             </View>
         )
     };
@@ -57,7 +68,7 @@ const Page = () => {
         <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
             <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={100}>
                 {/* Render the messages */}
-                <FlatList data={messages} renderItem={renderMessage} keyExtractor={(item) => item._id.toString()} ListFooterComponent={<View style={{ padding: 5 }} />} />
+                <FlatList ref={listRef} data={messages} renderItem={renderMessage} keyExtractor={(item) => item._id.toString()} ListFooterComponent={<View style={{ padding: 5 }} />} />
 
                 {/* Bottom message input */}
                 <View style={styles.inputContainer}>
