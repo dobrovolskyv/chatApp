@@ -1,6 +1,6 @@
 import { ScrollView, StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native'
 import React, { useEffect, useState } from 'react'
-import { useQuery } from 'convex/react';
+import { useAction, useQuery } from 'convex/react';
 import { api } from "../convex/_generated/api";
 import { Link } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -11,6 +11,8 @@ const index = () => {
   const groups = useQuery(api.groups.get) || [];
   const [name, setName] = useState('');
   const [visible, setVisible] = useState(false);
+  const [greeting, setGreeting]= useState('');
+  const performGreetingAction = useAction(api.greeting.getGreeting)
 
    useEffect(()=>{
     const loadUser = async ()=>{
@@ -26,6 +28,14 @@ const index = () => {
     loadUser();
    },[])
 
+   useEffect(()=>{
+    if(!name) return;
+    const loadGreeting =async () => {
+      const greeting = await performGreetingAction({name});
+      setGreeting(greeting);
+    };
+    loadGreeting();
+   }, [name])
 
    const setUser = async () =>{
     let r = (Math.random()+ 1).toString(36).substring(7);
@@ -49,6 +59,7 @@ const index = () => {
             </TouchableOpacity>
           </Link>
         ))}
+        <Text style={{textAlign: 'center', margin: 10}}>{greeting}</Text>
       </ScrollView>
       <Dialog.Container visible={visible}>
           <Dialog.Title>Username required</Dialog.Title>
